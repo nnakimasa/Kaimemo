@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String             @id @default(uuid())
+  email                 String             @unique
+  displayName           String             @map("display_name")
+  avatarUrl             String?            @map("avatar_url")
+  cognitoId             String             @unique @map("cognito_id")
+  planType              String             @default("free") @map("plan_type")
+  subscriptionStatus    String             @default("none") @map("subscription_status")
+  stripeCustomerId      String?            @map("stripe_customer_id")
+  subscriptionStartedAt DateTime?          @map("subscription_started_at")
+  subscriptionExpiresAt DateTime?          @map("subscription_expires_at")
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  ownedLists            List[]             @relation("ListOwner")
+  ownedGroups           Group[]            @relation("GroupOwner")
+  groupMemberships      GroupMember[]
+  assignedItems         Item[]             @relation("ItemAssignee")
+  checkedItems          Item[]             @relation("ItemChecker")
+
+  @@map("users")
+}
+
+model List {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  ownerId     String   @map("owner_id")
+  groupId     String?  @map("group_id")
+  isArchived  Boolean  @default(false) @map("is_archived")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  owner       User     @relation("ListOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  group       Group?   @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  items       Item[]
+
+  @@index([ownerId])
+  @@index([groupId])
+  @@map("lists")
+}
+
+model Item {
+  id          String    @id @default(uuid())
+  listId      String    @map("list_id")
+  name        String
+  quantity    Int       @default(1)
+  unit        String?
+  note        String?
+  isChecked   Boolean   @default(false) @map("is_checked")
+  checkedAt   DateTime? @map("checked_at")
+  checkedBy   String?   @map("checked_by")
+  assigneeId  String?   @map("assignee_id")
+  priority    String    @default("medium")
+  sortOrder   Int       @default(0) @map("sort_order")
+  category    String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  list        List      @relation(fields: [listId], references: [id], onDelete: Cascade)
+  assignee    User?     @relation("ItemAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  checker     User?     @relation("ItemChecker", fields: [checkedBy], references: [id], onDelete: SetNull)
+
+  @@index([listId])
+  @@index([assigneeId])
+  @@map("items")
+}
+
+model Group {
+  id              String        @id @default(uuid())
+  name            String
+  description     String?
+  ownerId         String        @map("owner_id")
+  inviteCode      String?       @unique @map("invite_code")
+  inviteExpiresAt DateTime?     @map("invite_expires_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  owner           User          @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members         GroupMember[]
+  lists           List[]
+
+  @@index([ownerId])
+  @@map("groups")
+}
+
+model GroupMember {
+  id        String   @id @default(uuid())
+  groupId   String   @map("group_id")
+  userId    String   @map("user_id")
+  role      String   @default("viewer")
+  joinedAt  DateTime @default(now()) @map("joined_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([userId])
+  @@map("group_members")
+}

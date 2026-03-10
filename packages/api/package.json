@@ -1,0 +1,37 @@
+{
+  "name": "@kaimemo/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc && tsc-alias",
+    "start": "node dist/index.js",
+    "lint": "eslint src --ext .ts",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@fastify/cors": "^9.0.0",
+    "@fastify/jwt": "^8.0.0",
+    "aws-jwt-verify": "^4.0.0",
+    "@kaimemo/shared": "workspace:*",
+    "@prisma/client": "^5.14.0",
+    "dotenv": "^16.4.0",
+    "fastify": "^4.27.0",
+    "fastify-plugin": "^4.5.0",
+    "pino-pretty": "^11.0.0",
+    "zod": "^3.23.0"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0",
+    "eslint": "^8.57.0",
+    "prisma": "^5.14.0",
+    "tsc-alias": "^1.8.0",
+    "tsx": "^4.10.0",
+    "typescript": "^5.4.0"
+  }
+}

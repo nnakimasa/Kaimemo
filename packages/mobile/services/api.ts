@@ -1,0 +1,98 @@
+import Constants from 'expo-constants';
+import type { ApiResponse, List, ListWithCount, Item } from '@kaimemo/shared';
+
+// Get API URL from Expo config or use default
+const getApiBaseUrl = () => {
+  if (__DEV__) {
+    // hostUri is e.g. "192.168.x.x:8081" — extract IP to reach the API server
+    const hostUri = Constants.expoConfig?.hostUri;
+    if (hostUri) {
+      const host = hostUri.split(':')[0];
+      return `http://${host}:3000`;
+    }
+    return 'http://localhost:3000';
+  }
+
+  // In production, use the configured API URL
+  return Constants.expoConfig?.extra?.apiUrl || 'http://localhost:3000';
+};
+
+const API_BASE = getApiBaseUrl();
+
+let authToken: string | null = null;
+
+export const setAuthToken = (token: string | null) => {
+  authToken = token;
+};
+
+async function fetchApi<T>(
+  endpoint: string,
+  options?: RequestInit
+): Promise<ApiResponse<T>> {
+  try {
+    const hasBody = options?.body !== undefined;
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      headers: {
+        ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+      },
+      ...options,
+    });
+
+    return response.json();
+  } catch (error) {
+    return {
+      data: null,
+      error: {
+        code: 'NETWORK_ERROR',
+        message: 'Network request failed',
+      },
+    };
+  }
+}
+
+// Lists API
+export const listsApi = {
+  getAll: () => fetchApi<ListWithCount[]>('/lists'),
+
+  getById: (id: string) => fetchApi<List & { items: Item[] }>(`/lists/${id}`),
+
+  create: (data: { name: string; description?: string }) =>
+    fetchApi<List>('/lists', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: string, data: Partial<List>) =>
+    fetchApi<List>(`/lists/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    fetchApi<{ deleted: boolean }>(`/lists/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
+// Items API
+export const itemsApi = {
+  getByList: (listId: string) => fetchApi<Item[]>(`/lists/${listId}/items`),
+
+  create: (listId: string, data: { name: string; quantity?: number }) =>
+    fetchApi<Item>(`/lists/${listId}/items`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: string, data: Partial<Item>) =>
+    fetchApi<Item>(`/items/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    fetchApi<{ deleted: boolean }>(`/items/${id}`, {
+      method: 'DELETE',
+    }),
+};

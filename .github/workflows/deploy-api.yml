@@ -1,0 +1,63 @@
+name: Deploy API to EC2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/api/**'
+      - 'packages/shared/**'
+      - '.github/workflows/deploy-api.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+
+            # リポジトリが存在しなければクローン
+            if [ ! -d "/app/kaimemo" ]; then
+              git clone https://github.com/${{ github.repository }} /app/kaimemo
+            fi
+
+            cd /app/kaimemo
+
+            # 最新コードを取得
+            git fetch origin main
+            git reset --hard origin/main
+
+            # 依存関係インストール
+            pnpm install --frozen-lockfile --ignore-scripts
+
+            # shared ビルド
+            pnpm --filter @kaimemo/shared build
+
+            # Prisma クライアント生成 + マイグレーション
+            pnpm --filter @kaimemo/api exec prisma generate
+            pnpm --filter @kaimemo/api exec prisma migrate deploy
+
+            # API ビルド
+            pnpm --filter @kaimemo/api build
+
+            # PM2 で再起動（初回は start、以降は reload）
+            if pm2 show kaimemo-api > /dev/null 2>&1; then
+              pm2 reload kaimemo-api
+            else
+              cd packages/api
+              pm2 start dist/index.js --name kaimemo-api
+              pm2 save
+            fi
+
+            echo "✅ Deploy completed"

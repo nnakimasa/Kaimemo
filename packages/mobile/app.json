@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Kaimemo",
+    "slug": "kaimemo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "kaimemo",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#16a34a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kaimemo.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#16a34a"
+      },
+      "package": "com.kaimemo.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "cognitoDomain": "ap-southeast-2rjxdy4uvb.auth.ap-southeast-2.amazoncognito.com",
+      "cognitoClientId": "3srrj2lt2iu6lgaitmdci9p3b8",
+      "cognitoRegion": "ap-southeast-2"
+    }
+  }
+}
