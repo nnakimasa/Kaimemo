@@ -2,7 +2,7 @@ name: Deploy API to EC2
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'packages/api/**'
       - 'packages/shared/**'
@@ -35,8 +35,8 @@ jobs:
             cd /app/kaimemo
 
             # 最新コードを取得
-            git fetch origin main
-            git reset --hard origin/main
+            git fetch origin master
+            git reset --hard origin/master
 
             # 依存関係インストール
             pnpm install --frozen-lockfile --ignore-scripts
