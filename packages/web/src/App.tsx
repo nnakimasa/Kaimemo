@@ -3,6 +3,9 @@ import { useAuth } from './auth/AuthContext';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import ListPage from './pages/ListPage';
+import GroupsPage from './pages/GroupsPage';
+import GroupDetailPage from './pages/GroupDetailPage';
+import InvitePage from './pages/InvitePage';
 import LoginPage from './pages/LoginPage';
 import CallbackPage from './pages/CallbackPage';
 
@@ -39,6 +42,9 @@ function App() {
       >
         <Route index element={<HomePage />} />
         <Route path="lists/:id" element={<ListPage />} />
+        <Route path="groups" element={<GroupsPage />} />
+        <Route path="groups/:id" element={<GroupDetailPage />} />
+        <Route path="invite/:code" element={<InvitePage />} />
       </Route>
     </Routes>
   );

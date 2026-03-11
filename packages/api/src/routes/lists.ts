@@ -5,14 +5,32 @@ import { sendSuccess, errors } from '../utils/response.js';
 const listsRoutes: FastifyPluginAsync = async (fastify) => {
   const authOpts = { preHandler: [fastify.verifyToken] };
 
-  // GET /lists - Get all lists for current user
+  // GET /lists - Get all lists for current user (owned + group lists)
   fastify.get('/lists', authOpts, async (request, reply) => {
+    const userGroupIds = (
+      await fastify.prisma.groupMember.findMany({
+        where: { userId: request.user.id },
+        select: { groupId: true },
+      })
+    ).map((m) => m.groupId);
+
     const lists = await fastify.prisma.list.findMany({
-      where: { ownerId: request.user.id },
+      where: {
+        OR: [
+          { ownerId: request.user.id },
+          { groupId: { in: userGroupIds } },
+        ],
+        isArchived: false,
+      },
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
       include: {
         _count: {
-          select: { items: true },
+          select: {
+            items: true,
+          },
+        },
+        group: {
+          select: { id: true, name: true },
         },
       },
     });
@@ -69,8 +87,16 @@ const listsRoutes: FastifyPluginAsync = async (fastify) => {
       return errors.notFound(reply, 'List');
     }
 
+    // Allow owner or group members to view
     if (list.ownerId !== request.user.id) {
-      return errors.forbidden(reply);
+      if (list.groupId) {
+        const membership = await fastify.prisma.groupMember.findUnique({
+          where: { groupId_userId: { groupId: list.groupId, userId: request.user.id } },
+        });
+        if (!membership) return errors.forbidden(reply);
+      } else {
+        return errors.forbidden(reply);
+      }
     }
 
     return sendSuccess(reply, list);

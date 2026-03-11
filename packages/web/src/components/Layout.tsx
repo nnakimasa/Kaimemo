@@ -12,6 +12,12 @@ export default function Layout() {
             Kaimemo
           </Link>
           <nav className="flex items-center gap-4">
+            <Link to="/" className="text-sm opacity-75 hover:opacity-100 transition">
+              リスト
+            </Link>
+            <Link to="/groups" className="text-sm opacity-75 hover:opacity-100 transition">
+              グループ
+            </Link>
             {user && (
               <span className="text-sm opacity-90">{user.displayName}</span>
             )}

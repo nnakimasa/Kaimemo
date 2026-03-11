@@ -22,7 +22,7 @@
 
 ## 開発進捗状況
 
-### 現在のフェーズ: Phase 3
+### 現在のフェーズ: Phase 4
 
 ---
 
@@ -144,7 +144,35 @@
 
 ## Phase 3: RDS接続 + 基本API本番化
 
-**ステータス: 🚧 進行中**
+**ステータス: ✅ 完了**
+
+### 作業中断時点のメモ（2026-03-11）
+
+**完了済み情報:**
+- RDS エンドポイント: `kaimemo-db.cteaqcuscv0b.ap-southeast-2.rds.amazonaws.com`
+- RDS パスワード: `Kaimemo2024!`
+- EC2 パブリックIP: `54.252.169.83`
+- EC2 キーペア: `C:\Users\Akimasa\Desktop\.ssh\kaimemo-key.pem`
+- GitHubリポジトリ: `https://github.com/nnakimasa/Kaimemo`（masterブランチ）
+- EC2上のNode.js: v20.20.1（fnm経由）、pnpm・pm2インストール済み
+- `http://54.252.169.83:3000/health` → `{"status":"ok"}` 確認済み
+
+**次に再開する作業: ⑤ GitHub Secrets設定**
+
+---
+
+### 再開時の指示文
+
+> Phase 3の作業を再開します。
+> 現在の状況:
+> - ①RDS、②EC2、③SG設定、④EC2初期セットアップ（API起動まで）が完了済み
+> - `http://54.252.169.83:3000/health` で動作確認済み
+> - 次は⑤GitHub Secrets設定から進めてください
+> - GitHubユーザー名: `nnakimasa`、リポジトリ名: `Kaimemo`（masterブランチ）
+> - EC2キーペア: `C:\Users\Akimasa\Desktop\.ssh\kaimemo-key.pem`
+> - EC2 IP: `54.252.169.83`
+
+---
 
 ### Claude実装
 - [x] `packages/api/Dockerfile`（マルチステージビルド）
@@ -156,96 +184,140 @@
 
 #### ① RDS 作成（PostgreSQL）
 
-- [ ] **AWS Console → RDS → データベースの作成**
-  - エンジン: PostgreSQL
-  - テンプレート: **無料利用枠**
+- [x] **AWS Console → RDS → データベースの作成**
+  - エンジン: PostgreSQL 17.6
+  - テンプレート: 無料利用枠
   - DBインスタンス識別子: `kaimemo-db`
   - マスターユーザー名: `postgres`
-  - マスターパスワード: 任意（メモしておく）
+  - マスターパスワード: `Kaimemo2024!`
   - インスタンスクラス: `db.t3.micro`
   - ストレージ: 20GB（gp2）
-  - パブリックアクセス: **なし**（EC2 からのみ接続）
-  - VPC セキュリティグループ: 新規作成（後でEC2のSGからの5432許可を追加）
+  - パブリックアクセス: なし
+  - VPC セキュリティグループ: `kaimemo-rds-sg`（新規作成）
 
-- [ ] **RDS エンドポイントをメモ**
-  ```
-  例: kaimemo-db.xxxxxxxxxxxx.ap-southeast-2.rds.amazonaws.com
-  ```
+- [x] **RDS エンドポイント**: `kaimemo-db.cteaqcuscv0b.ap-southeast-2.rds.amazonaws.com`
 
 #### ② EC2 作成
 
-- [ ] **AWS Console → EC2 → インスタンスを起動**
+- [x] **AWS Console → EC2 → インスタンスを起動**
   - AMI: Amazon Linux 2023
-  - インスタンスタイプ: `t3.micro`（無料枠）
-  - キーペア: 新規作成（`.pem` ファイルをダウンロードして保管）
-  - セキュリティグループ: SSH(22), カスタムTCP(3000) を許可
+  - インスタンスタイプ: `t3.micro`（無料枠、standardモード）
+  - キーペア: `kaimemo-key`（`C:\Users\Akimasa\Desktop\.ssh\kaimemo-key.pem`）
+  - セキュリティグループ: `kaimemo-ec2-sg`（SSH:22, TCP:3000）
 
-- [ ] **EC2 のパブリック IP をメモ**
+- [x] **EC2 パブリックIP**: `54.252.169.83`
 
 #### ③ セキュリティグループ設定
 
-- [ ] **RDS のセキュリティグループ** に EC2 の SG からの **5432ポート**を許可するインバウンドルールを追加
+- [x] **RDS の `kaimemo-rds-sg`** に `kaimemo-ec2-sg` からの **5432ポート**を許可
 
 #### ④ EC2 初期セットアップ
 
-- [ ] **EC2 に SSH 接続**
-  ```bash
-  chmod 400 your-key.pem
-  ssh -i your-key.pem ec2-user@[EC2-パブリックIP]
-  ```
-
-- [ ] **セットアップスクリプト実行**
-  ```bash
-  curl -o setup.sh https://raw.githubusercontent.com/[YOUR_USERNAME]/Kaimemo/main/scripts/setup-ec2.sh
-  bash setup.sh
-  ```
-
-- [ ] **リポジトリクローン**
-  ```bash
-  git clone https://github.com/[YOUR_USERNAME]/Kaimemo.git /app/kaimemo
-  ```
-
-- [ ] **本番 .env を設定**
-  ```bash
-  cp /app/kaimemo/packages/api/.env.production.example /app/kaimemo/packages/api/.env
-  vi /app/kaimemo/packages/api/.env
-  # DATABASE_URL の [PASSWORD] と [RDS-ENDPOINT] を実際の値に変更
-  ```
-
-- [ ] **初回デプロイ（手動）**
-  ```bash
-  cd /app/kaimemo
-  pnpm install --frozen-lockfile --ignore-scripts
-  pnpm --filter @kaimemo/shared build
-  pnpm --filter @kaimemo/api exec prisma generate
-  pnpm --filter @kaimemo/api exec prisma migrate deploy
-  pnpm --filter @kaimemo/api build
-  cd packages/api
-  pm2 start dist/index.js --name kaimemo-api
-  pm2 save
-  ```
+- [x] SSH接続確認
+- [x] Node.js 20（fnm）・pnpm・pm2インストール
+- [x] リポジトリクローン（`/app/kaimemo`）
+- [x] `.env` 設定（DATABASE_URL等）
+- [x] `pnpm install`, `shared build`, `prisma generate`, `prisma migrate deploy`, `api build`
+- [x] `pm2 start kaimemo-api`、自動起動設定
+- [x] `http://54.252.169.83:3000/health` → `{"status":"ok"}` 確認
 
 #### ⑤ GitHub Secrets 設定（自動デプロイ用）
 
-- [ ] **GitHub リポジトリ → Settings → Secrets → Actions** に追加:
+- [x] **GitHub リポジトリ → Settings → Secrets → Actions** に追加:
   | Secret名 | 値 |
   |----------|-----|
-  | `EC2_HOST` | EC2 のパブリック IP |
+  | `EC2_HOST` | `54.252.169.83` |
   | `EC2_USER` | `ec2-user` |
-  | `EC2_SSH_KEY` | `.pem` ファイルの中身（`-----BEGIN RSA PRIVATE KEY-----` から） |
+  | `EC2_SSH_KEY` | `C:\Users\Akimasa\Desktop\.ssh\kaimemo-key.pem` の中身 |
 
 #### ⑥ 動作確認
 
-- [ ] `http://[EC2-IP]:3000/health` で `{"status":"ok"}` が返る
-- [ ] Web の API_URL を EC2 に向けてログイン・リスト操作が動作する
-- [ ] `git push origin main` で自動デプロイが実行される（GitHub Actions）
-- [ ] **「Phase 3 完了」を報告**
+- [x] `http://54.252.169.83:3000/health` で `{"status":"ok"}` が返る
+- [x] Web の API_URL を EC2 に向けてログイン・リスト操作が動作する
+- [x] `git push origin master` で自動デプロイが実行される（GitHub Actions）
+- [x] **「Phase 3 完了」を報告**
 
 ---
 
-## Phase 4以降の予定
+## Phase 4: グループ機能 + Web公開（S3 + CloudFront）
 
-- Phase 4: グループ機能 + Web公開（S3 + CloudFront）
+**ステータス: 🚧 進行中**
+
+### Claude実装
+- [x] `packages/api/src/routes/groups.ts`（グループCRUD・招待・参加・メンバー管理）
+- [x] `packages/api/src/routes/lists.ts` 更新（グループリスト取得対応）
+- [x] `packages/api/src/app.ts` 更新（groupsRoutes登録）
+- [x] `packages/web/src/services/api.ts` 更新（groupsApi追加・VITE_API_URL対応）
+- [x] `packages/web/src/hooks/useGroups.ts`（グループ用Reactフック）
+- [x] `packages/web/src/pages/GroupsPage.tsx`（グループ一覧・作成）
+- [x] `packages/web/src/pages/GroupDetailPage.tsx`（メンバー管理・招待リンク）
+- [x] `packages/web/src/pages/InvitePage.tsx`（招待リンクから参加）
+- [x] `packages/web/src/App.tsx` 更新（グループルート追加）
+- [x] `packages/web/src/components/Layout.tsx` 更新（ナビゲーション追加）
+- [x] `.github/workflows/deploy-web.yml`（S3 + CloudFrontデプロイ）
+
+### ユーザー作業
+
+#### ① グループ機能の動作確認（ローカル）
+
+- [ ] `git push origin master` でEC2に自動デプロイ（API更新）
+- [ ] `pnpm dev:web` 起動 → グループ作成・招待・参加が動作することを確認
+
+#### ② S3バケット作成
+
+- [ ] **AWS Console → S3 → バケットを作成**
+  - バケット名: `kaimemo-web`（グローバルユニークな名前）
+  - リージョン: `ap-southeast-2`
+  - パブリックアクセス: **すべてブロックをオフ**（後でCloudFront OAC設定）
+  - バケットポリシー: CloudFrontのOACのみ許可（CloudFront設定後に設定）
+
+#### ③ CloudFrontディストリビューション作成
+
+- [ ] **AWS Console → CloudFront → ディストリビューションを作成**
+  - オリジン: S3バケット（OAC使用）
+  - デフォルトルートオブジェクト: `index.html`
+  - カスタムエラーレスポンス: 403/404 → `/index.html`（SPAルーティング用）
+  - **ディストリビューションドメイン名**を控える: `xxxxx.cloudfront.net`
+
+#### ④ Cognitoコールバック更新
+
+- [ ] **Cognito アプリクライアント → 許可コールバックURL** に追加:
+  - `https://xxxxx.cloudfront.net/callback`
+- [ ] **許可サインアウトURL** に追加:
+  - `https://xxxxx.cloudfront.net/login`
+
+#### ⑤ EC2の CORS_ORIGIN 更新
+
+- [ ] EC2 SSH接続 → `/app/kaimemo/packages/api/.env` の `CORS_ORIGIN` を更新:
+  ```
+  CORS_ORIGIN=http://localhost:5173,https://xxxxx.cloudfront.net
+  ```
+- [ ] `pm2 reload kaimemo-api` で反映
+
+#### ⑥ GitHub Secrets 追加（Webデプロイ用）
+
+- [ ] **GitHub → Settings → Secrets → Actions** に追加:
+  | Secret名 | 値 |
+  |----------|-----|
+  | `AWS_ACCESS_KEY_ID` | IAMアクセスキー |
+  | `AWS_SECRET_ACCESS_KEY` | IAMシークレットキー |
+  | `S3_BUCKET` | `kaimemo-web`（バケット名） |
+  | `CLOUDFRONT_DISTRIBUTION_ID` | CloudFrontのID |
+  | `VITE_COGNITO_DOMAIN` | `ap-southeast-2rjxdy4uvb.auth.ap-southeast-2.amazoncognito.com` |
+  | `VITE_COGNITO_CLIENT_ID` | `3srrj2lt2iu6lgaitmdci9p3b8` |
+  | `VITE_API_URL` | `http://54.252.169.83:3000` |
+
+#### ⑦ 動作確認
+
+- [ ] `git push origin master` でWebデプロイが実行される（GitHub Actions）
+- [ ] `https://xxxxx.cloudfront.net` でWebアプリが表示される
+- [ ] CloudFrontドメインでログイン・グループ機能が動作する
+- [ ] **「Phase 4 完了」を報告**
+
+---
+
+## Phase 5以降の予定
+
 - Phase 5: 通知 + LINE連携
 - Phase 6: 音声・画像・バーコード入力
 - Phase 7: オフライン同期 + ジオフェンス
