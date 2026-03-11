@@ -30,7 +30,7 @@ export interface User extends BaseEntity {
  */
 export type UserPublic = Pick<
   User,
-  'id' | 'displayName' | 'avatarUrl' | 'createdAt'
+  'id' | 'displayName' | 'email' | 'avatarUrl' | 'createdAt'
 >;
 
 /**

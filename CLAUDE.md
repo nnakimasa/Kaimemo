@@ -26,6 +26,29 @@
 
 ---
 
+## 開発環境メモ
+
+### Playwright MCP設定（ブラウザデバッグ用）
+
+```bash
+# Chrome + 既存プロファイル（ログイン済み状態を引き継ぐ）
+claude mcp add playwright -- cmd /c npx -y @playwright/mcp@latest --browser chrome --user-data-dir "C:\Users\Akimasa\AppData\Local\Google\Chrome\User Data"
+
+# 確認
+claude mcp list
+```
+
+> 注意: 使用時はChromeをすべて閉じてからClaudeに指示すること（プロファイル競合防止）
+
+### ローカル開発サーバー起動
+```bash
+pnpm dev:web    # http://localhost:5173
+pnpm dev:api    # http://localhost:3000
+docker compose up -d  # PostgreSQL（必要な場合）
+```
+
+---
+
 ## Phase 1: ローカル開発環境構築 + 基本UI
 
 **ステータス: ✅ 完了**

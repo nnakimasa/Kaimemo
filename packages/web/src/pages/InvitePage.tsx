@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useJoinGroup } from '../hooks/useGroups';
 
@@ -8,30 +8,30 @@ export default function InvitePage() {
   const joinGroup = useJoinGroup();
   const [status, setStatus] = useState<'idle' | 'joining' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const hasStarted = useRef(false);
 
   useEffect(() => {
-    if (!code) return;
-    handleJoin();
-  }, [code]);
+    if (!code || hasStarted.current) return;
+    hasStarted.current = true;
 
-  const handleJoin = async () => {
-    if (!code) return;
     setStatus('joining');
-    try {
-      const result = await joinGroup.mutateAsync(code);
-      if (result) {
-        setStatus('success');
-        setTimeout(() => {
-          navigate(`/groups/${result.groupId}`);
-        }, 1500);
-      }
-    } catch (err) {
-      setStatus('error');
-      setErrorMessage(
-        err instanceof Error ? err.message : 'グループへの参加に失敗しました'
-      );
-    }
-  };
+    joinGroup
+      .mutateAsync(code)
+      .then((result) => {
+        if (result) {
+          setStatus('success');
+          setTimeout(() => {
+            navigate(`/groups/${result.groupId}`);
+          }, 1500);
+        }
+      })
+      .catch((err) => {
+        setStatus('error');
+        setErrorMessage(
+          err instanceof Error ? err.message : 'グループへの参加に失敗しました'
+        );
+      });
+  }, [code, joinGroup, navigate]);
 
   if (status === 'joining') {
     return (
