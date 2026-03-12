@@ -264,7 +264,7 @@ docker compose up -d  # PostgreSQL（必要な場合）
 
 ## Phase 4: グループ機能 + Web公開（S3 + CloudFront）
 
-**ステータス: 🚧 進行中**
+**ステータス: ✅ 完了**
 
 ### Claude実装
 - [x] `packages/api/src/routes/groups.ts`（グループCRUD・招待・参加・メンバー管理）
@@ -283,43 +283,41 @@ docker compose up -d  # PostgreSQL（必要な場合）
 
 #### ① グループ機能の動作確認（ローカル）
 
-- [ ] `git push origin master` でEC2に自動デプロイ（API更新）
-- [ ] `pnpm dev:web` 起動 → グループ作成・招待・参加が動作することを確認
+- [x] `git push origin master` でEC2に自動デプロイ（API更新）
+- [x] `pnpm dev:web` 起動 → グループ作成・招待・参加が動作することを確認
 
 #### ② S3バケット作成
 
-- [ ] **AWS Console → S3 → バケットを作成**
-  - バケット名: `kaimemo-web`（グローバルユニークな名前）
+- [x] **AWS Console → S3 → バケットを作成**
+  - バケット名: `kaimemo-web`
   - リージョン: `ap-southeast-2`
-  - パブリックアクセス: **すべてブロックをオフ**（後でCloudFront OAC設定）
-  - バケットポリシー: CloudFrontのOACのみ許可（CloudFront設定後に設定）
 
 #### ③ CloudFrontディストリビューション作成
 
-- [ ] **AWS Console → CloudFront → ディストリビューションを作成**
-  - オリジン: S3バケット（OAC使用）
-  - デフォルトルートオブジェクト: `index.html`
-  - カスタムエラーレスポンス: 403/404 → `/index.html`（SPAルーティング用）
-  - **ディストリビューションドメイン名**を控える: `xxxxx.cloudfront.net`
+- [x] **AWS Console → CloudFront → ディストリビューションを作成**
+  - ディストリビューションドメイン: `dj8tsqf6gqrp6.cloudfront.net`
+  - ディストリビューションID: `E1YXWAT1AD0JEW`
+  - OAC使用、SPAエラーレスポンス設定済み
+  - EC2オリジン（kaimemo-ec2-api）追加済み
+  - `/api/*` ビヘイビア + CloudFront Function（kaimemo-api-rewrite）設定済み
 
 #### ④ Cognitoコールバック更新
 
-- [ ] **Cognito アプリクライアント → 許可コールバックURL** に追加:
-  - `https://xxxxx.cloudfront.net/callback`
-- [ ] **許可サインアウトURL** に追加:
-  - `https://xxxxx.cloudfront.net/login`
+- [x] **Cognito アプリクライアント → 許可コールバックURL** に追加:
+  - `https://dj8tsqf6gqrp6.cloudfront.net/callback`
+- [x] **許可サインアウトURL** に追加:
+  - `https://dj8tsqf6gqrp6.cloudfront.net/login`
 
 #### ⑤ EC2の CORS_ORIGIN 更新
 
-- [ ] EC2 SSH接続 → `/app/kaimemo/packages/api/.env` の `CORS_ORIGIN` を更新:
+- [x] `/app/kaimemo/packages/api/.env` の `CORS_ORIGIN` を更新:
   ```
-  CORS_ORIGIN=http://localhost:5173,https://xxxxx.cloudfront.net
+  CORS_ORIGIN=http://localhost:5173,https://dj8tsqf6gqrp6.cloudfront.net
   ```
-- [ ] `pm2 reload kaimemo-api` で反映
 
 #### ⑥ GitHub Secrets 追加（Webデプロイ用）
 
-- [ ] **GitHub → Settings → Secrets → Actions** に追加:
+- [x] **GitHub → Settings → Secrets → Actions** に追加:
   | Secret名 | 値 |
   |----------|-----|
   | `AWS_ACCESS_KEY_ID` | IAMアクセスキー |
@@ -328,14 +326,14 @@ docker compose up -d  # PostgreSQL（必要な場合）
   | `CLOUDFRONT_DISTRIBUTION_ID` | CloudFrontのID |
   | `VITE_COGNITO_DOMAIN` | `ap-southeast-2rjxdy4uvb.auth.ap-southeast-2.amazoncognito.com` |
   | `VITE_COGNITO_CLIENT_ID` | `3srrj2lt2iu6lgaitmdci9p3b8` |
-  | `VITE_API_URL` | `http://54.252.169.83:3000` |
+  | `VITE_API_URL` | `/api` |
 
 #### ⑦ 動作確認
 
-- [ ] `git push origin master` でWebデプロイが実行される（GitHub Actions）
-- [ ] `https://xxxxx.cloudfront.net` でWebアプリが表示される
-- [ ] CloudFrontドメインでログイン・グループ機能が動作する
-- [ ] **「Phase 4 完了」を報告**
+- [x] `git push origin master` でWebデプロイが実行される（GitHub Actions）
+- [x] `https://dj8tsqf6gqrp6.cloudfront.net` でWebアプリが表示される
+- [x] CloudFrontドメインでログイン・グループ機能が動作する
+- [x] **「Phase 4 完了」を報告**
 
 ---
 
