@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_install",
+      "Bash(grep:*)",
+      "Bash(claude mcp:*)",
+      "WebFetch(domain:www.google.com)",
+      "WebFetch(domain:apps.apple.com)",
+      "Bash(find c:UsersAkimasaDesktopcursorKaimemopackageswebsrccomponents -type f -name *.tsx)"
+    ]
+  }
+}

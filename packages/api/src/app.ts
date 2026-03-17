@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.js';
 import listsRoutes from './routes/lists.js';
 import itemsRoutes from './routes/items.js';
 import groupsRoutes from './routes/groups.js';
+import shareTokensRoutes from './routes/shareTokens.js';
 
 export const buildApp = async () => {
   const fastify = Fastify({
@@ -41,6 +42,7 @@ export const buildApp = async () => {
   await fastify.register(listsRoutes);
   await fastify.register(itemsRoutes);
   await fastify.register(groupsRoutes);
+  await fastify.register(shareTokensRoutes);
 
   return fastify;
 };

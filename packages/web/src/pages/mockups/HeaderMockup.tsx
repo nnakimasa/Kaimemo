@@ -1,17 +1,53 @@
-import { useState, useRef, useEffect } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../auth/AuthContext';
+/**
+ * MOCKUP: ヘッダー通知ドロップダウン
+ * 確認URL: http://localhost:5173/mockup/header
+ */
+import { useState } from 'react';
 
-type AppNotification = {
+type Notification = {
   id: string;
   type: 'check' | 'add' | 'invite' | 'reminder';
   title: string;
   body: string;
   time: string;
   isRead: boolean;
+  listName?: string;
 };
 
-function NotifIcon({ type }: { type: AppNotification['type'] }) {
+const INITIAL_NOTIFICATIONS: Notification[] = [
+  {
+    id: '1', type: 'check',
+    title: 'りんごがチェックされました',
+    body: '週末の食材',
+    time: '2分前', isRead: false, listName: '週末の食材',
+  },
+  {
+    id: '2', type: 'add',
+    title: 'パンが追加されました',
+    body: '週末の食材',
+    time: '15分前', isRead: false, listName: '週末の食材',
+  },
+  {
+    id: '3', type: 'invite',
+    title: '仕事グループに招待されました',
+    body: '田中 太郎より',
+    time: '1時間前', isRead: true,
+  },
+  {
+    id: '4', type: 'reminder',
+    title: 'トイレットペーパー のリマインダー',
+    body: '個人メモ',
+    time: '昨日', isRead: true, listName: '個人メモ',
+  },
+  {
+    id: '5', type: 'check',
+    title: '牛乳がチェックされました',
+    body: '週末の食材',
+    time: '2日前', isRead: true, listName: '週末の食材',
+  },
+];
+
+function NotifIcon({ type }: { type: Notification['type'] }) {
   if (type === 'check') return (
     <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
       <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,6 +69,7 @@ function NotifIcon({ type }: { type: AppNotification['type'] }) {
       </svg>
     </div>
   );
+  // reminder
   return (
     <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
       <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -42,36 +79,11 @@ function NotifIcon({ type }: { type: AppNotification['type'] }) {
   );
 }
 
-export default function Layout() {
-  const { user, logout } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
+export default function HeaderMockup() {
+  const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const notifRef = useRef<HTMLDivElement>(null);
-  const location = useLocation();
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
-
-  // 画面遷移時にメニュー・通知を閉じる
-  useEffect(() => {
-    setMenuOpen(false);
-    setNotifOpen(false);
-  }, [location.pathname]);
-
-  // メニュー外クリックで閉じる
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
-        setNotifOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
 
   const markAllRead = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -80,35 +92,23 @@ export default function Layout() {
 
   const markRead = (id: string) => {
     setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, isRead: true } : n));
-    setNotifOpen(false);
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="bg-primary-600 text-white shadow-md">
+    <div className="min-h-screen flex flex-col bg-gray-50" onClick={() => setNotifOpen(false)}>
+      {/* ─── ヘッダー ─── */}
+      <header className="bg-primary-600 text-white shadow-md relative z-30">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="text-xl font-bold">
-            Kaimemo
-          </Link>
-
-          {/* PC: 横並びナビ */}
-          <nav className="hidden sm:flex items-center gap-4">
-            <Link to="/" className="text-sm opacity-75 hover:opacity-100 transition">
-              リスト
-            </Link>
-            <Link to="/groups" className="text-sm opacity-75 hover:opacity-100 transition">
-              グループ
-            </Link>
-
-            <Link to="/settings" className="text-sm opacity-75 hover:opacity-100 transition">
-              設定
-            </Link>
+          <span className="text-xl font-bold">Kaimemo</span>
+          <nav className="flex items-center gap-1 sm:gap-4">
+            <span className="text-sm font-semibold border-b-2 border-white pb-0.5 hidden sm:inline">リスト</span>
+            <span className="text-sm opacity-75 hidden sm:inline">グループ</span>
 
             {/* 🔔 通知ベル */}
-            <div className="relative" ref={notifRef}>
+            <div className="relative" onClick={(e) => e.stopPropagation()}>
               <button
                 onClick={() => setNotifOpen((v) => !v)}
-                className="relative p-1.5 rounded-lg hover:bg-white/10 transition"
+                className="relative p-2 rounded-lg hover:bg-white/10 transition"
                 title="通知"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,14 +116,19 @@ export default function Layout() {
                     d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
                 {unreadCount > 0 && (
-                  <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
                     {unreadCount}
                   </span>
                 )}
               </button>
 
+              {/* ─── 通知ドロップダウン ─── */}
               {notifOpen && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+                <div
+                  className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* ヘッダー */}
                   <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                     <span className="text-sm font-semibold text-gray-800">通知</span>
                     {unreadCount > 0 && (
@@ -135,6 +140,8 @@ export default function Layout() {
                       </button>
                     )}
                   </div>
+
+                  {/* 通知リスト */}
                   <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
                     {notifications.length === 0 ? (
                       <p className="text-sm text-gray-400 text-center py-8">通知はありません</p>
@@ -142,7 +149,7 @@ export default function Layout() {
                       notifications.map((notif) => (
                         <button
                           key={notif.id}
-                          onClick={() => markRead(notif.id)}
+                          onClick={() => { markRead(notif.id); setNotifOpen(false); }}
                           className={`w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-gray-50 transition
                             ${!notif.isRead ? 'bg-blue-50/50' : ''}`}
                         >
@@ -167,69 +174,33 @@ export default function Layout() {
               )}
             </div>
 
-            {user && (
-              <span className="text-sm opacity-90">{user.displayName}</span>
-            )}
-            <button
-              onClick={logout}
-              className="text-sm opacity-75 hover:opacity-100 transition"
-            >
-              ログアウト
-            </button>
+            <span className="text-sm opacity-90 hidden sm:inline">田中 太郎</span>
+            <span className="text-sm opacity-75 hidden sm:inline">ログアウト</span>
           </nav>
-
-          {/* スマホ: ハンバーガーメニュー */}
-          <div className="sm:hidden relative" ref={menuRef}>
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              className="p-2 opacity-75 hover:opacity-100 transition"
-              aria-label="メニュー"
-            >
-              {menuOpen ? (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              ) : (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              )}
-            </button>
-
-            {menuOpen && (
-              <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50 py-1 text-gray-800">
-                <Link to="/" className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition text-gray-700">
-                  リスト
-                </Link>
-                <Link to="/groups" className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition text-gray-700">
-                  グループ
-                </Link>
-                <Link to="/settings" className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition text-gray-700">
-                  設定
-                </Link>
-                <div className="border-t border-gray-100 my-1" />
-                {user && (
-                  <div className="px-4 py-2 text-sm text-gray-500">{user.displayName}</div>
-                )}
-                <button
-                  onClick={logout}
-                  className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition"
-                >
-                  ログアウト
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       </header>
 
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-6">
-        <Outlet />
-      </main>
+      {/* ─── ページコンテンツ（ダミー） ─── */}
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-6 space-y-3">
+        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-700">
+          <strong>📋 モックアップ ③</strong> — 確認ポイント:
+          🔔バッジ（未読数）/ ドロップダウン表示 / 既読・未読の見た目の差 / 「全て既読にする」ボタン /
+          通知タップで既読化＆閉じる / 画面外タップで閉じる
+        </div>
 
-      <footer className="bg-gray-100 border-t py-4 text-center text-sm text-gray-500">
-        Kaimemo - 買い物リスト共有アプリ
-      </footer>
+        {/* ダミーのリストカード */}
+        {['週末の食材', '個人メモ', '仕事の備品'].map((name, i) => (
+          <div key={i} className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
+            <div>
+              <p className="text-base font-semibold text-gray-800">{name}</p>
+              <p className="text-xs text-gray-400 mt-1">{i + 2} / {i + 6} 完了</p>
+            </div>
+            <div className="w-20 bg-gray-100 rounded-full h-1.5">
+              <div className="h-1.5 rounded-full bg-primary-500" style={{ width: `${[37, 20, 60][i]}%` }} />
+            </div>
+          </div>
+        ))}
+      </main>
     </div>
   );
 }

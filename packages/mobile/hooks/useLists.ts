@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { listsApi } from '../services/api';
+import type { List } from '@kaimemo/shared';
 
 export function useLists() {
   return useQuery({
@@ -29,6 +30,21 @@ export function useCreateList() {
   return useMutation({
     mutationFn: async (data: { name: string; description?: string }) => {
       const response = await listsApi.create(data);
+      if (response.error) throw new Error(response.error.message);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lists'] });
+    },
+  });
+}
+
+export function useUpdateList() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string } & Partial<List>) => {
+      const response = await listsApi.update(id, data);
       if (response.error) throw new Error(response.error.message);
       return response.data;
     },

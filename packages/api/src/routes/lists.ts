@@ -25,9 +25,11 @@ const listsRoutes: FastifyPluginAsync = async (fastify) => {
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
       include: {
         _count: {
-          select: {
-            items: true,
-          },
+          select: { items: true },
+        },
+        items: {
+          where: { isChecked: true },
+          select: { id: true },
         },
         group: {
           select: { id: true, name: true },
@@ -35,11 +37,14 @@ const listsRoutes: FastifyPluginAsync = async (fastify) => {
       },
     });
 
-    const listsWithCount = lists.map((list) => ({
-      ...list,
-      itemCount: list._count.items,
-      checkedCount: 0,
-    }));
+    const listsWithCount = lists.map((list) => {
+      const { items: checkedItems, ...listData } = list;
+      return {
+        ...listData,
+        itemCount: list._count.items,
+        checkedCount: checkedItems.length,
+      };
+    });
 
     return sendSuccess(reply, listsWithCount);
   });

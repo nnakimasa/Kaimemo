@@ -96,3 +96,16 @@ export const itemsApi = {
       method: 'DELETE',
     }),
 };
+
+// Share Token API
+export const shareApi = {
+  generateToken: (listId: string) =>
+    fetchApi<{ token: string }>(`/lists/${listId}/share-token`, {
+      method: 'POST',
+    }),
+};
+
+// Groups API
+export const groupsApi = {
+  getAll: () => fetchApi<Array<{ id: string; name: string; description: string | null; role: string; memberCount: number }>>('/groups'),
+};

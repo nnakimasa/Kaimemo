@@ -38,8 +38,9 @@ function RootLayoutInner() {
         }}
       >
         <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="index" options={{ title: 'Kaimemo' }} />
-        <Stack.Screen name="lists/[id]" options={{ title: 'リスト' }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="lists/[id]" options={{ title: 'リスト', headerStyle: { backgroundColor: '#16a34a' }, headerTintColor: '#fff' }} />
       </Stack>
       {!accessToken && <Redirect href="/login" />}
     </>

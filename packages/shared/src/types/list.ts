@@ -43,6 +43,7 @@ export interface CreateListInput {
 export interface UpdateListInput {
   name?: string;
   description?: string | null;
+  groupId?: string | null;
   isArchived?: boolean;
   sortOrder?: number;
 }

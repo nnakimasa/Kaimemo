@@ -27,6 +27,7 @@ model User {
   groupMemberships      GroupMember[]
   assignedItems         Item[]             @relation("ItemAssignee")
   checkedItems          Item[]             @relation("ItemChecker")
+  shareTokensCreated    ListShareToken[]
 
   @@map("users")
 }
@@ -43,13 +44,30 @@ model List {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
-  owner       User     @relation("ListOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  group       Group?   @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  owner       User              @relation("ListOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  group       Group?            @relation(fields: [groupId], references: [id], onDelete: SetNull)
   items       Item[]
+  shareTokens ListShareToken[]
 
   @@index([ownerId])
   @@index([groupId])
   @@map("lists")
+}
+
+model ListShareToken {
+  id        String    @id @default(uuid())
+  listId    String    @map("list_id")
+  token     String    @unique
+  createdBy String    @map("created_by")
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  list      List      @relation(fields: [listId], references: [id], onDelete: Cascade)
+  creator   User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@index([listId])
+  @@map("list_share_tokens")
 }
 
 model Item {

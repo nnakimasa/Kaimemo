@@ -41,6 +41,33 @@ export function useToggleItem() {
   });
 }
 
+export function useUpdateItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      listId,
+      ...data
+    }: {
+      id: string;
+      listId: string;
+      name?: string;
+      quantity?: number;
+      unit?: string | null;
+      note?: string | null;
+    }) => {
+      const response = await itemsApi.update(id, data);
+      if (response.error) throw new Error(response.error.message);
+      return { ...response.data, listId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['lists', data?.listId] });
+      queryClient.invalidateQueries({ queryKey: ['lists'] });
+    },
+  });
+}
+
 export function useDeleteItem() {
   const queryClient = useQueryClient();
 

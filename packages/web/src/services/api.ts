@@ -78,6 +78,27 @@ export const itemsApi = {
     }),
 };
 
+// Share Token API
+export const shareApi = {
+  generateToken: (listId: string) =>
+    fetchApi<{ token: string }>(`/lists/${listId}/share-token`, {
+      method: 'POST',
+    }),
+
+  getReadOnlyList: (token: string) =>
+    fetchApi<{
+      list: {
+        id: string;
+        name: string;
+        group: { id: string; name: string } | null;
+        updatedAt: string;
+        itemCount: number;
+        checkedCount: number;
+        items: Item[];
+      };
+    }>(`/readonly/${token}`),
+};
+
 // Groups API
 export const groupsApi = {
   getAll: () =>
