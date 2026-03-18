@@ -29,6 +29,14 @@ async function fetchApi<T>(
     ...options,
   });
 
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!contentType.includes('application/json')) {
+    return {
+      data: null,
+      error: { code: 'SERVER_ERROR', message: `APIサーバーエラー (HTTP ${response.status}) - デプロイが完了していない可能性があります` },
+    } as ApiResponse<T>;
+  }
+
   return response.json();
 }
 
