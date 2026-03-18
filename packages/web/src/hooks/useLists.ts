@@ -32,7 +32,7 @@ export function useCreateList() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { name: string; description?: string }) => {
+    mutationFn: async (data: { name: string; description?: string; groupId?: string | null }) => {
       const response = await listsApi.create(data);
       if (response.error) throw new Error(response.error.message);
       return response.data;

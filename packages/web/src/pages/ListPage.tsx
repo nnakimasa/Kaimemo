@@ -20,13 +20,6 @@ function groupByColor(items: Item[]) {
 
 type EditModal = { id: string; name: string; quantity: number; unit: string; note: string };
 
-function readFileAsDataURL(file: File): Promise<string> {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target?.result as string);
-    reader.readAsDataURL(file);
-  });
-}
 
 export default function ListPage() {
   const { id: listId } = useParams<{ id: string }>();

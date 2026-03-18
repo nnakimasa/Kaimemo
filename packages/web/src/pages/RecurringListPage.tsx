@@ -385,7 +385,7 @@ export default function RecurringListPage() {
                 </div>
                 <span className="text-sm text-gray-500">グループなし</span>
               </button>
-              {groups.map((g: any) => {
+              {(groups ?? []).map((g: any) => {
                 const current = lists.find((l) => l.id === groupModalId)?.group;
                 const isSelected = current?.id === g.id;
                 return (
