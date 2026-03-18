@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { sendSuccess, errors } from '../utils/response.js';
-import { calcNextGenerationDate } from '../utils/recurring.js';
+import { calcNextGenerationDate, calcNextShoppingDate } from '../utils/recurring.js';
 
 const recurringListsRoutes: FastifyPluginAsync = async (fastify) => {
   const authOpts = { preHandler: [fastify.verifyToken] };
@@ -182,11 +182,25 @@ export async function generateList(
   prisma: any,
   recurringList: any
 ): Promise<any> {
+  // reminderTime (e.g. "09:00") → reminderAt on the shopping day
+  let reminderAt: Date | null = null;
+  if (recurringList.reminderTime) {
+    const shoppingDate = calcNextShoppingDate(
+      recurringList.frequency,
+      recurringList.weekday,
+      recurringList.monthlyWeek,
+    );
+    const [h, m] = (recurringList.reminderTime as string).split(':').map(Number);
+    shoppingDate.setHours(h, m, 0, 0);
+    reminderAt = shoppingDate;
+  }
+
   const list = await prisma.list.create({
     data: {
       name: recurringList.name,
       ownerId: recurringList.ownerId,
       groupId: recurringList.groupId ?? null,
+      ...(reminderAt ? { reminderAt } : {}),
       items: {
         create: (recurringList.items ?? []).map((item: any, idx: number) => ({
           name: item.name,

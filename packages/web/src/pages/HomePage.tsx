@@ -240,9 +240,9 @@ export default function HomePage() {
                     />
                   </div>
                 )}
-                {(list as any).reminderAt && (
+                {list.reminderAt && (
                   <p className="text-xs text-orange-500 mt-1 flex items-center gap-1">
-                    🔔 {formatReminder((list as any).reminderAt)}
+                    🔔 {formatReminder(list.reminderAt)}
                   </p>
                 )}
               </>
@@ -278,7 +278,7 @@ export default function HomePage() {
                   複製
                 </button>
                 <button onClick={() => {
-                    const r = (list as any).reminderAt;
+                    const r = list.reminderAt;
                     if (r) {
                       const d = new Date(r);
                       setReminderDate(d.toISOString().slice(0, 10));

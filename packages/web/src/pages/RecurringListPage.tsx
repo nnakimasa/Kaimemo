@@ -64,6 +64,7 @@ export default function RecurringListPage() {
 
   const [isCreating, setIsCreating] = useState(false);
   const [newName, setNewName] = useState('');
+  const [createError, setCreateError] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -108,8 +109,13 @@ export default function RecurringListPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) return;
-    await createList.mutateAsync({ name: newName.trim() });
-    setNewName(''); setIsCreating(false);
+    setCreateError(null);
+    try {
+      await createList.mutateAsync({ name: newName.trim() });
+      setNewName(''); setIsCreating(false);
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : '作成に失敗しました');
+    }
   };
 
   const handleRename = async () => {
@@ -173,9 +179,15 @@ export default function RecurringListPage() {
           <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)}
             placeholder="定期リスト名を入力..." autoFocus
             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm" />
+          {createError && (
+            <p className="text-xs text-red-500 mt-1">{createError}</p>
+          )}
           <div className="flex gap-2 mt-2">
-            <button type="submit" className="flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm">作成</button>
-            <button type="button" onClick={() => { setIsCreating(false); setNewName(''); }}
+            <button type="submit" disabled={createList.isPending}
+              className="flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50">
+              {createList.isPending ? '作成中...' : '作成'}
+            </button>
+            <button type="button" onClick={() => { setIsCreating(false); setNewName(''); setCreateError(null); }}
               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-600 text-sm">キャンセル</button>
           </div>
         </form>
