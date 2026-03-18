@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { groupsApi } from '../services/api';
+import { useAuth } from '../auth/AuthContext';
 
 export function useGroups() {
+  const { isAuthenticated } = useAuth();
   return useQuery({
     queryKey: ['groups'],
     queryFn: async () => {
@@ -9,10 +11,12 @@ export function useGroups() {
       if (response.error) throw new Error(response.error.message);
       return response.data;
     },
+    enabled: isAuthenticated,
   });
 }
 
 export function useGroup(id: string) {
+  const { isAuthenticated } = useAuth();
   return useQuery({
     queryKey: ['groups', id],
     queryFn: async () => {
@@ -20,7 +24,7 @@ export function useGroup(id: string) {
       if (response.error) throw new Error(response.error.message);
       return response.data;
     },
-    enabled: !!id,
+    enabled: isAuthenticated && !!id,
   });
 }
 

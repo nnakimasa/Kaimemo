@@ -99,6 +99,9 @@ export default function Layout() {
             <Link to="/groups" className="text-sm opacity-75 hover:opacity-100 transition">
               グループ
             </Link>
+            <Link to="/recurring" className="text-sm opacity-75 hover:opacity-100 transition">
+              定期リスト
+            </Link>
 
             <Link to="/settings" className="text-sm opacity-75 hover:opacity-100 transition">
               設定
@@ -203,6 +206,9 @@ export default function Layout() {
                 </Link>
                 <Link to="/groups" className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition text-gray-700">
                   グループ
+                </Link>
+                <Link to="/recurring" className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition text-gray-700">
+                  定期リスト
                 </Link>
                 <Link to="/settings" className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition text-gray-700">
                   設定

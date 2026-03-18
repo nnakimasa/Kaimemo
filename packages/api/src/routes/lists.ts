@@ -20,7 +20,6 @@ const listsRoutes: FastifyPluginAsync = async (fastify) => {
           { ownerId: request.user.id },
           { groupId: { in: userGroupIds } },
         ],
-        isArchived: false,
       },
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
       include: {

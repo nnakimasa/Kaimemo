@@ -9,6 +9,7 @@ import listsRoutes from './routes/lists.js';
 import itemsRoutes from './routes/items.js';
 import groupsRoutes from './routes/groups.js';
 import shareTokensRoutes from './routes/shareTokens.js';
+import recurringListsRoutes, { generateList } from './routes/recurringLists.js';
 
 export const buildApp = async () => {
   const fastify = Fastify({
@@ -43,6 +44,32 @@ export const buildApp = async () => {
   await fastify.register(itemsRoutes);
   await fastify.register(groupsRoutes);
   await fastify.register(shareTokensRoutes);
+  await fastify.register(recurringListsRoutes);
+
+  // Auto-generate recurring lists (check every hour)
+  const runRecurringCheck = async () => {
+    try {
+      const prisma = (fastify as any).prisma;
+      const due = await prisma.recurringList.findMany({
+        where: {
+          isActive: true,
+          nextGenerationAt: { lte: new Date() },
+        },
+        include: { items: { orderBy: { sortOrder: 'asc' } } },
+      });
+      for (const rl of due) {
+        await generateList(prisma, rl);
+        fastify.log.info(`Generated list from recurring: ${rl.name}`);
+      }
+    } catch (e) {
+      fastify.log.error('Recurring list generation error:', e);
+    }
+  };
+
+  fastify.addHook('onReady', async () => {
+    await runRecurringCheck();
+    setInterval(runRecurringCheck, 60 * 60 * 1000); // every hour
+  });
 
   return fastify;
 };

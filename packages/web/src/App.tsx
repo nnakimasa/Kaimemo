@@ -18,6 +18,7 @@ import MobileTabMockup from './pages/mockups/MobileTabMockup';
 import MockupHub from './pages/mockups/MockupHub';
 import ReadOnlyListPage from './pages/ReadOnlyListPage';
 import SettingsPage from './pages/SettingsPage';
+import RecurringListPage from './pages/RecurringListPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -66,6 +67,7 @@ function App() {
         <Route path="groups/:id" element={<GroupDetailPage />} />
         <Route path="invite/:code" element={<InvitePage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="recurring" element={<RecurringListPage />} />
       </Route>
     </Routes>
   );

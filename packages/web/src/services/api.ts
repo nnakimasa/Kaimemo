@@ -78,6 +78,76 @@ export const itemsApi = {
     }),
 };
 
+// Recurring Lists API
+type RecurringSchedule = {
+  frequency: string;
+  weekday: number;
+  monthlyWeek: number;
+  daysBefore: number;
+  reminderTime: string | null;
+};
+
+export type RecurringListData = {
+  id: string;
+  name: string;
+  ownerId: string;
+  groupId: string | null;
+  group: { id: string; name: string } | null;
+  sortOrder: number;
+  frequency: string;
+  weekday: number;
+  monthlyWeek: number;
+  daysBefore: number;
+  reminderTime: string | null;
+  isActive: boolean;
+  nextGenerationAt: string | null;
+  lastGeneratedAt: string | null;
+  itemCount: number;
+};
+
+export type RecurringItemData = {
+  id: string;
+  recurringListId: string;
+  name: string;
+  quantity: number;
+  unit: string | null;
+  sortOrder: number;
+};
+
+export const recurringApi = {
+  getAll: () => fetchApi<RecurringListData[]>('/recurring-lists'),
+
+  getById: (id: string) =>
+    fetchApi<RecurringListData & { items: RecurringItemData[] }>(`/recurring-lists/${id}`),
+
+  create: (data: { name: string; groupId?: string | null }) =>
+    fetchApi<RecurringListData>('/recurring-lists', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: string, data: Partial<RecurringSchedule & { name: string; groupId: string | null; sortOrder: number; isActive: boolean }>) =>
+    fetchApi<RecurringListData>(`/recurring-lists/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    fetchApi<{ deleted: boolean }>(`/recurring-lists/${id}`, { method: 'DELETE' }),
+
+  addItem: (id: string, data: { name: string; quantity?: number; unit?: string }) =>
+    fetchApi<RecurringItemData>(`/recurring-lists/${id}/items`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  deleteItem: (id: string, itemId: string) =>
+    fetchApi<{ deleted: boolean }>(`/recurring-lists/${id}/items/${itemId}`, { method: 'DELETE' }),
+
+  generate: (id: string) =>
+    fetchApi<{ listId: string }>(`/recurring-lists/${id}/generate`, { method: 'POST' }),
+};
+
 // Share Token API
 export const shareApi = {
   generateToken: (listId: string) =>

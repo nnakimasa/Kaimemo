@@ -97,6 +97,42 @@ export const itemsApi = {
     }),
 };
 
+// Recurring Lists API
+export type RecurringListData = {
+  id: string;
+  name: string;
+  group: { id: string; name: string } | null;
+  frequency: string;
+  weekday: number;
+  monthlyWeek: number;
+  daysBefore: number;
+  reminderTime: string | null;
+  nextGenerationAt: string | null;
+  itemCount: number;
+};
+
+export const recurringApi = {
+  getAll: () => fetchApi<RecurringListData[]>('/recurring-lists'),
+
+  create: (data: { name: string }) =>
+    fetchApi<RecurringListData>('/recurring-lists', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: string, data: Partial<RecurringListData & { frequency: string; weekday: number; monthlyWeek: number; daysBefore: number; reminderTime: string | null }>) =>
+    fetchApi<RecurringListData>(`/recurring-lists/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    fetchApi<{ deleted: boolean }>(`/recurring-lists/${id}`, { method: 'DELETE' }),
+
+  generate: (id: string) =>
+    fetchApi<{ listId: string }>(`/recurring-lists/${id}/generate`, { method: 'POST' }),
+};
+
 // Share Token API
 export const shareApi = {
   generateToken: (listId: string) =>

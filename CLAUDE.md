@@ -34,7 +34,7 @@
 
 ## 開発進捗状況
 
-### 現在のフェーズ: Phase 5
+### 現在のフェーズ: Phase 6
 
 ---
 
@@ -351,7 +351,7 @@ docker compose up -d  # PostgreSQL（必要な場合）
 
 ## Phase 5: 通知・LINE連携 + 定期リマインダー
 
-**ステータス: 🔨 本実装フェーズ中**
+**ステータス: ✅ 完了**
 
 ---
 
@@ -515,7 +515,7 @@ docker compose up -d  # PostgreSQL（必要な場合）
 - [x] ヘッダー通知ドロップダウン（🔔ベル・未読バッジ・通知リスト・既読管理）
 - [x] 閲覧専用リンク（APIトークン生成・DB保存 + `/readonly/:token` ルート・Web閲覧ページ）
 - [x] 設定ページ（プロフィール・通知ON/OFF・Pro誘導・`/settings` ルート）
-- [ ] 定期リスト（DB: RecurringList テーブル・cron 生成・リマインダー通知）← 未着手
+- [x] 定期リスト（DB: RecurringList/RecurringItem・API CRUD・スケジュール計算・1時間毎自動生成・Web/Mobileページ）
 
 ### ⑩ 全画面つながりレビュー
 **ステータス: ✅ 承認済み（2026-03-17）**
@@ -525,44 +525,48 @@ docker compose up -d  # PostgreSQL（必要な場合）
 - 各モックアップ間のリンクは接続済み（リストカードクリック → リスト詳細、閲覧専用リンク → 閲覧専用ページ等）
 
 確認項目:
-- [ ] 全画面の遷移フローに抜け・矛盾がないか
-- [ ] 「戻る」導線がすべての画面に存在するか
-- [ ] モーダルとページ遷移の使い分けに一貫性があるか
-- [ ] ボトムタブ（Mobile）とヘッダーナビ（Web）で対応関係が揃っているか
-- [ ] エラー・空状態（データなし）の表示が考慮されているか
-- [ ] 操作の流れが自然で直感的か（ユーザー視点での最終確認）
+- [x] 全画面の遷移フローに抜け・矛盾がないか
+- [x] 「戻る」導線がすべての画面に存在するか
+- [x] モーダルとページ遷移の使い分けに一貫性があるか
+- [x] ボトムタブ（Mobile）とヘッダーナビ（Web）で対応関係が揃っているか
+- [x] エラー・空状態（データなし）の表示が考慮されているか
+- [x] 操作の流れが自然で直感的か（ユーザー視点での最終確認）
 
 ---
 
-### 作業中断メモ（2026-03-17 更新）
+### Phase 5 完了サマリー（2026-03-18 確定）
 
-**現在の状況:**
-- ⑩ 全画面つながりレビュー承認済み（2026-03-17）
-- Web本実装 大部分完了: ホーム・リスト詳細・ヘッダー通知・閲覧専用リンク・設定ページ
-- 閲覧専用リンク: DBマイグレーション適用済み（`list_share_tokens` テーブル）
-- **未完了: 定期リスト機能（DB: RecurringList テーブル・cron・リマインダー通知）**
+**全実装・動作確認 完了:**
+- Web: ホーム・リスト詳細・ヘッダー通知・閲覧専用リンク・設定・定期リスト
+- Mobile: ボトムタブ・アイテムカード刷新・スワイプ削除・編集モーダル・共有シート・定期リスト
+- DBマイグレーション: `list_share_tokens` / `recurring_lists` / `recurring_items` テーブル適用済み
 
-**⚠️ API dev server の再起動が必要:**
-Prismaスキーマに `ListShareToken` モデルを追加したが、dev server起動中はDLLロックのため
-Prisma Client の再生成が完了していない。
-`pnpm dev:api` を再起動するとPrisma Clientが自動再生成され、閲覧専用リンクAPIが動作する。
+**修正済みバグ:**
+- 履歴セクション（API側の `isArchived: false` フィルタを除去）
+- 初回ロード401エラー（`enabled: isAuthenticated` をuseLists/useGroups/useRecurringListsに追加）
+- ローカル開発時の404エラー（`packages/web/.env` の `VITE_API_TARGET` をlocalhostに修正）
+- Mobile編集モーダルのキーボード重なり（KeyboardAvoidingView + center配置に変更）
+- スワイプ削除の途中停止（`onPanResponderTerminationRequest: () => false` で解消）
 
-**次回再開時の指示文:**
-> Phase 5の作業を再開します。
-> Web本実装（ホーム・リスト詳細・ヘッダー通知・閲覧専用リンク・設定）は完了済みです。
-> 残タスクは「定期リスト機能」のみです（DB: RecurringList テーブル・API・Web/Mobileページ）。
-> Prismaスキーマに `ListShareToken` モデルを追加済み・マイグレーション適用済みです。
-> APIサーバーを再起動後、`GET /readonly/:token` と `POST /lists/:id/share-token` が使えます。
+**EC2本番への適用（未実施）:**
+```bash
+# EC2 SSH後:
+cd /app/kaimemo && git pull origin master
+pnpm --filter api exec prisma migrate deploy
+pm2 restart kaimemo-api
+```
+
+**次フェーズ:** Phase 6（カテゴリ分類・検索フィルタ・AI音声入力強化）
 
 ---
 
 ### ユーザー作業
 - [x] 全9画面のモックアップ確認・承認（①〜⑨ 完了）
 - [x] ⑩ 全画面つながりレビュー 承認済み（2026-03-17）
-- [ ] **API dev server 再起動**（`pnpm dev:api` を止めて再起動 → Prisma Client 再生成）
-- [ ] **動作確認**: ホーム（検索・並び替え・履歴）/ リスト詳細（編集・共有・閲覧専用リンク）/ 設定ページ
-- [ ] 動作確認（定期リスト）← 実装後
-- [ ] **「Phase 5 完了」を報告**
+- [x] API dev server 再起動・Prisma Client 再生成
+- [x] 動作確認: ホーム（検索・並び替え・履歴）/ リスト詳細（編集・共有・閲覧専用リンク）/ 設定ページ
+- [x] 動作確認（定期リスト）
+- [x] **「Phase 5 完了」を報告（2026-03-18）**
 
 ---
 
@@ -614,6 +618,13 @@ kaimemo/
 ├── docker-compose.yml  # PostgreSQL設定
 └── turbo.json          # Turborepo設定
 ```
+
+## Mobile UI 設計方針
+
+- **モーダルはすべて画面中央表示**（`justifyContent: 'center'` + `paddingHorizontal: 16` + `borderRadius: 20`）
+  - `animationType="fade"`、キーボード回避が必要な場合は `KeyboardAvoidingView` で包む
+  - 共有シート（Share Sheet）のみ下付き（`justifyContent: 'flex-end'`）で例外
+- **スワイプ削除**: `onMoveShouldSetPanResponderCapture` で水平スワイプを優先してFlatListスクロールに負けないようにする
 
 ## 既知の問題・注意事項
 

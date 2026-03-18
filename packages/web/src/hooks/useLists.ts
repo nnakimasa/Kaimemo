@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { listsApi } from '../services/api';
+import { useAuth } from '../auth/AuthContext';
 
 export function useLists() {
+  const { isAuthenticated } = useAuth();
   return useQuery({
     queryKey: ['lists'],
     queryFn: async () => {
@@ -9,10 +11,12 @@ export function useLists() {
       if (response.error) throw new Error(response.error.message);
       return response.data;
     },
+    enabled: isAuthenticated,
   });
 }
 
 export function useList(id: string) {
+  const { isAuthenticated } = useAuth();
   return useQuery({
     queryKey: ['lists', id],
     queryFn: async () => {
@@ -20,6 +24,7 @@ export function useList(id: string) {
       if (response.error) throw new Error(response.error.message);
       return response.data;
     },
+    enabled: isAuthenticated && !!id,
   });
 }
 

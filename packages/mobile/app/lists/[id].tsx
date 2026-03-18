@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, TouchableOpacity, TextInput,
   StyleSheet, Alert, ActivityIndicator, RefreshControl,
   Modal, TouchableWithoutFeedback, Animated, PanResponder,
-  Share, Linking,
+  Share, Linking, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,7 +43,19 @@ function SwipeableRow({
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gs) =>
-        Math.abs(gs.dx) > 8 && Math.abs(gs.dx) > Math.abs(gs.dy) * 1.2,
+        Math.abs(gs.dx) > 6 && Math.abs(gs.dx) > Math.abs(gs.dy) * 2,
+      onMoveShouldSetPanResponderCapture: (_, gs) =>
+        Math.abs(gs.dx) > 10 && Math.abs(gs.dx) > Math.abs(gs.dy) * 2,
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderTerminate: () => {
+        // 横取りされた場合も確実にスナップ
+        Animated.spring(translateX, {
+          toValue: isOpenRef.current ? -DELETE_WIDTH : 0,
+          useNativeDriver: true,
+          tension: 120,
+          friction: 9,
+        }).start();
+      },
       onPanResponderMove: (_, gs) => {
         const base = isOpenRef.current ? -DELETE_WIDTH : 0;
         const next = Math.max(-DELETE_WIDTH, Math.min(0, base + gs.dx));
@@ -51,13 +63,21 @@ function SwipeableRow({
       },
       onPanResponderRelease: (_, gs) => {
         const opened = isOpenRef.current;
-        const shouldOpen = opened ? gs.dx <= 0 : gs.dx < -(DELETE_WIDTH / 3);
+        const fastSwipeLeft = gs.vx < -0.5;
+        const fastSwipeRight = gs.vx > 0.5;
+        const shouldOpen = fastSwipeLeft
+          ? true
+          : fastSwipeRight
+          ? false
+          : opened
+          ? gs.dx < DELETE_WIDTH / 2
+          : gs.dx < -(DELETE_WIDTH / 3);
         if (shouldOpen) {
           onOpen();
-          Animated.spring(translateX, { toValue: -DELETE_WIDTH, useNativeDriver: true }).start();
+          Animated.spring(translateX, { toValue: -DELETE_WIDTH, useNativeDriver: true, tension: 120, friction: 9 }).start();
         } else {
           onClose();
-          Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start();
+          Animated.spring(translateX, { toValue: 0, useNativeDriver: true, tension: 120, friction: 9 }).start();
         }
       },
     })
@@ -69,7 +89,7 @@ function SwipeableRow({
         <Ionicons name="trash-outline" size={20} color="#fff" />
         <Text style={sw.deleteText}>削除</Text>
       </TouchableOpacity>
-      <Animated.View {...panResponder.panHandlers} style={{ transform: [{ translateX }] }}>
+      <Animated.View {...panResponder.panHandlers} style={[sw.card, { transform: [{ translateX }] }]}>
         {children}
       </Animated.View>
     </View>
@@ -80,6 +100,7 @@ const sw = StyleSheet.create({
   wrap: { overflow: 'hidden', borderRadius: 12, marginBottom: 8 },
   deleteBtn: { position: 'absolute', right: 0, top: 0, bottom: 0, backgroundColor: '#ef4444', justifyContent: 'center', alignItems: 'center', gap: 2 },
   deleteText: { color: '#fff', fontSize: 11 },
+  card: { backgroundColor: '#fff' },
 });
 
 // ─── メイン画面 ───────────────────────────────────────────────
@@ -349,9 +370,10 @@ export default function ListScreen() {
         </Modal>
 
         {/* アイテム編集モーダル */}
-        <Modal visible={editItem !== null} transparent animationType="slide" onRequestClose={() => setEditItem(null)}>
+        <Modal visible={editItem !== null} transparent animationType="fade" onRequestClose={() => setEditItem(null)}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
           <TouchableWithoutFeedback onPress={() => setEditItem(null)}>
-            <View style={s.overlay}>
+            <View style={[s.overlay, s.overlayCenter]}>
               <TouchableWithoutFeedback>
                 <View style={s.editSheet}>
                   <View style={s.editHeader}>
@@ -417,6 +439,7 @@ export default function ListScreen() {
               </TouchableWithoutFeedback>
             </View>
           </TouchableWithoutFeedback>
+          </KeyboardAvoidingView>
         </Modal>
       </View>
     </>
@@ -454,6 +477,7 @@ const s = StyleSheet.create({
   emptyText: { fontSize: 15, color: '#6b7280', textAlign: 'center', lineHeight: 24 },
 
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  overlayCenter: { justifyContent: 'center', paddingHorizontal: 16 },
 
   shareSheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 36 },
   shareTitle: { fontSize: 16, fontWeight: '700', textAlign: 'center', color: '#374151', marginBottom: 12 },
@@ -463,7 +487,7 @@ const s = StyleSheet.create({
   shareCancelBtn: { alignItems: 'center', paddingTop: 16 },
   shareCancelText: { fontSize: 15, color: '#9ca3af' },
 
-  editSheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 36 },
+  editSheet: { backgroundColor: '#fff', borderRadius: 20, padding: 20, paddingBottom: 24 },
   editHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   editTitle: { fontSize: 17, fontWeight: '600', color: '#111827' },
   fieldLabel: { fontSize: 13, color: '#6b7280', marginBottom: 4, marginTop: 12 },
