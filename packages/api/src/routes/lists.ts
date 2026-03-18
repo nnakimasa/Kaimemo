@@ -82,7 +82,7 @@ const listsRoutes: FastifyPluginAsync = async (fastify) => {
       where: { id },
       include: {
         items: {
-          orderBy: [{ isChecked: 'asc' }, { sortOrder: 'asc' }],
+          orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
         },
       },
     });

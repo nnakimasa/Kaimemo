@@ -10,6 +10,7 @@ export interface List extends BaseEntity {
   groupId: string | null;
   isArchived: boolean;
   sortOrder: number;
+  reminderAt: string | null;
 }
 
 /**
@@ -46,4 +47,5 @@ export interface UpdateListInput {
   groupId?: string | null;
   isArchived?: boolean;
   sortOrder?: number;
+  reminderAt?: string | null;
 }

@@ -39,10 +39,11 @@ model List {
   description String?
   ownerId     String   @map("owner_id")
   groupId     String?  @map("group_id")
-  isArchived  Boolean  @default(false) @map("is_archived")
-  sortOrder   Int      @default(0) @map("sort_order")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  isArchived  Boolean   @default(false) @map("is_archived")
+  sortOrder   Int       @default(0) @map("sort_order")
+  reminderAt  DateTime? @map("reminder_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   // Relations
   owner       User              @relation("ListOwner", fields: [ownerId], references: [id], onDelete: Cascade)

@@ -47,7 +47,7 @@ export function useUpdateList() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; name?: string; groupId?: string | null; isArchived?: boolean; sortOrder?: number }) => {
+    mutationFn: async ({ id, ...data }: { id: string; name?: string; groupId?: string | null; isArchived?: boolean; sortOrder?: number; reminderAt?: string | null }) => {
       const response = await listsApi.update(id, data);
       if (response.error) throw new Error(response.error.message);
       return response.data;

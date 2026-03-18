@@ -30,6 +30,7 @@ export const updateListSchema = z.object({
   groupId: z.string().uuid().nullable().optional(),
   isArchived: z.boolean().optional(),
   sortOrder: z.number().int().optional(),
+  reminderAt: z.string().datetime().nullable().optional(),
 });
 
 // Item schemas

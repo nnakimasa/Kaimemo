@@ -20,6 +20,17 @@ function GroupBadge({ name }: { name: string }) {
   );
 }
 
+function formatReminder(isoString: string): string {
+  const d = new Date(isoString);
+  const days = ['日', '月', '火', '水', '木', '金', '土'];
+  const month = d.getMonth() + 1;
+  const date = d.getDate();
+  const dow = days[d.getDay()];
+  const h = String(d.getHours()).padStart(2, '0');
+  const m = String(d.getMinutes()).padStart(2, '0');
+  return `${month}月${date}日(${dow}) ${h}:${m}`;
+}
+
 // ─── メインコンポーネント ────────────────────────────────────
 
 export default function HomePage() {
@@ -49,12 +60,34 @@ export default function HomePage() {
   const dragIdRef = useRef<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
+  // リマインダーモーダル
+  const [reminderModalId, setReminderModalId] = useState<string | null>(null);
+  const [reminderDate, setReminderDate] = useState('');
+  const [reminderTime, setReminderTime] = useState('09:00');
+
   // メニュー外クリックで閉じる
   useEffect(() => {
     const handler = () => setOpenMenuId(null);
     document.addEventListener('click', handler);
     return () => document.removeEventListener('click', handler);
   }, []);
+
+  // 完了から12時間以上経過したリストを自動アーカイブ
+  useEffect(() => {
+    if (!lists.length) return;
+    const TWELVE_HOURS = 12 * 60 * 60 * 1000;
+    lists.forEach((list) => {
+      if (
+        !list.isArchived &&
+        list.itemCount > 0 &&
+        list.checkedCount === list.itemCount &&
+        Date.now() - new Date(list.updatedAt).getTime() > TWELVE_HOURS
+      ) {
+        updateList.mutate({ id: list.id, isArchived: true });
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lists.map((l) => l.id).join()]);
 
   // ─── フィルタ ───
   const filtered = activeLists.filter(
@@ -207,6 +240,11 @@ export default function HomePage() {
                     />
                   </div>
                 )}
+                {(list as any).reminderAt && (
+                  <p className="text-xs text-orange-500 mt-1 flex items-center gap-1">
+                    🔔 {formatReminder((list as any).reminderAt)}
+                  </p>
+                )}
               </>
             )}
           </div>
@@ -239,6 +277,25 @@ export default function HomePage() {
                   </svg>
                   複製
                 </button>
+                <button onClick={() => {
+                    const r = (list as any).reminderAt;
+                    if (r) {
+                      const d = new Date(r);
+                      setReminderDate(d.toISOString().slice(0, 10));
+                      setReminderTime(`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`);
+                    } else {
+                      setReminderDate('');
+                      setReminderTime('09:00');
+                    }
+                    setReminderModalId(list.id);
+                    setOpenMenuId(null);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                  リマインダー設定
+                </button>
                 <button onClick={() => { setGroupModalId(list.id); setOpenMenuId(null); }}
                   className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
                   <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -247,15 +304,6 @@ export default function HomePage() {
                   </svg>
                   グループ設定
                 </button>
-                {!isHistory && (
-                  <button onClick={() => handleArchive(list.id, true)}
-                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                    </svg>
-                    履歴に移動
-                  </button>
-                )}
                 {isHistory && (
                   <button onClick={() => handleArchive(list.id, false)}
                     className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
@@ -368,6 +416,64 @@ export default function HomePage() {
               {historyLists.map((list) => renderCard(list, true))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* リマインダー設定モーダル */}
+      {reminderModalId && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4"
+          onClick={() => setReminderModalId(null)}>
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-100">
+              <h2 className="text-base font-bold text-gray-900">リマインダー設定</h2>
+              <button onClick={() => setReminderModalId(null)} className="p-1 text-gray-400 hover:text-gray-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">通知日</label>
+                <input type="date" value={reminderDate}
+                  onChange={(e) => setReminderDate(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">通知時刻</label>
+                <input type="time" value={reminderTime}
+                  onChange={(e) => setReminderTime(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+              </div>
+            </div>
+            <div className="flex gap-3 px-6 pb-5">
+              <button onClick={() => setReminderModalId(null)}
+                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">
+                キャンセル
+              </button>
+              {(lists.find((l) => l.id === reminderModalId) as any)?.reminderAt && (
+                <button onClick={async () => {
+                    await updateList.mutateAsync({ id: reminderModalId!, reminderAt: null });
+                    setReminderModalId(null);
+                  }}
+                  className="px-4 py-2.5 border border-red-200 rounded-lg text-sm text-red-500 hover:bg-red-50 transition">
+                  削除
+                </button>
+              )}
+              <button
+                disabled={!reminderDate}
+                onClick={async () => {
+                  if (!reminderDate) return;
+                  const isoString = new Date(`${reminderDate}T${reminderTime}`).toISOString();
+                  await updateList.mutateAsync({ id: reminderModalId!, reminderAt: isoString });
+                  setReminderModalId(null);
+                }}
+                className="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-lg text-sm hover:bg-primary-700 transition disabled:opacity-50">
+                保存
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

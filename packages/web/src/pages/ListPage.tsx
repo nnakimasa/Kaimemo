@@ -5,19 +5,6 @@ import { useCreateItem, useToggleItem, useUpdateItem, useDeleteItem } from '../h
 import { shareApi } from '../services/api';
 import type { Item } from '@kaimemo/shared';
 
-// カテゴリ色の並び順（Phase 6で動的に）
-const COLOR_ORDER: (string | null)[] = ['#f87171', '#60a5fa', '#4ade80', '#facc15', null];
-
-function groupByColor(items: Item[]) {
-  const map = new Map<string | null, Item[]>();
-  COLOR_ORDER.forEach((c) => map.set(c, []));
-  items.filter((i) => !i.isChecked).forEach((item) => {
-    const key = COLOR_ORDER.includes((item as any).categoryColor ?? null) ? (item as any).categoryColor ?? null : null;
-    map.get(key)!.push(item);
-  });
-  return COLOR_ORDER.map((color) => ({ color, items: map.get(color)! })).filter((g) => g.items.length > 0);
-}
-
 type EditModal = { id: string; name: string; quantity: number; unit: string; note: string };
 
 
@@ -145,7 +132,7 @@ export default function ListPage() {
   );
 
   const checkedItems = list.items.filter((i) => i.isChecked);
-  const groups = groupByColor(list.items);
+  const allItems = [...list.items].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
   const totalCount = list.items.length;
   const checkedCount = checkedItems.length;
   const progress = totalCount > 0 ? checkedCount / totalCount : 0;
@@ -200,10 +187,40 @@ export default function ListPage() {
         </button>
       </form>
 
-      {/* ─── 未チェックアイテム（カラーグループ別） ─── */}
-      {groups.map(({ color, items: groupItems }) => (
-        <div key={color ?? 'none'} className="space-y-1.5">
-          {groupItems.map((item) => (
+      {/* ─── 全アイテム（位置を保持して表示） ─── */}
+      <div className="space-y-1.5">
+        {allItems.map((item) => {
+          if (item.isChecked) {
+            return (
+              <div
+                key={item.id}
+                className="bg-white rounded-lg shadow-sm flex items-stretch overflow-hidden opacity-60"
+                style={{
+                  backgroundImage: 'repeating-linear-gradient(-45deg, rgba(156,163,175,0.12) 0px, rgba(156,163,175,0.12) 2px, transparent 2px, transparent 9px)',
+                }}
+              >
+                <div className="w-1 flex-shrink-0" style={{ backgroundColor: (item as any).categoryColor ?? 'transparent' }} />
+                <div className="flex-1 flex items-center gap-3 px-3 py-1">
+                  <button
+                    onClick={() => handleToggle(item)}
+                    className="w-4 h-4 rounded-full border-2 border-primary-500 bg-primary-500 flex items-center justify-center flex-shrink-0"
+                  >
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </button>
+                  <span className="flex-1 text-xs text-gray-400 line-through truncate">{item.name}</span>
+                  <button onClick={() => handleDelete(item.id)}
+                    className="p-1 text-gray-300 hover:text-red-500 transition flex-shrink-0">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            );
+          }
+          return (
             <div
               key={item.id}
               draggable
@@ -214,81 +231,34 @@ export default function ListPage() {
               className={`bg-white rounded-lg shadow-sm flex items-stretch overflow-hidden transition
                 ${dragOverId === item.id ? 'ring-2 ring-primary-400' : 'hover:shadow-md'}`}
             >
-              {/* 左端カラーバー */}
               <div className="w-1 flex-shrink-0" style={{ backgroundColor: (item as any).categoryColor ?? 'transparent' }} />
-
               <div className="flex-1 flex items-center gap-3 px-3 py-3">
-                {/* チェックボックス */}
                 <button
                   onClick={() => handleToggle(item)}
                   className="w-6 h-6 rounded-full border-2 border-gray-300 hover:border-primary-500 transition flex-shrink-0"
                 />
-
-                {/* アイテム名・メモ（クリックで編集モーダル） */}
                 <div className="flex-1 min-w-0 cursor-pointer" onClick={() => openEdit(item)}>
                   <span className="text-sm text-gray-900">{item.name}</span>
                   {item.note && (
                     <p className="text-xs text-gray-400 italic truncate mt-0.5">{item.note}</p>
                   )}
                 </div>
-
-                {/* 数量バッジ */}
                 {(item.quantity > 1 || item.unit) && (
                   <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full flex-shrink-0">
                     x{item.quantity}{item.unit || ''}
                   </span>
                 )}
-
-                {/* 削除ボタン */}
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  className="p-1 text-gray-300 hover:text-red-500 transition flex-shrink-0"
-                >
+                <button onClick={() => handleDelete(item.id)}
+                  className="p-1 text-gray-300 hover:text-red-500 transition flex-shrink-0">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>
               </div>
             </div>
-          ))}
-        </div>
-      ))}
-
-      {/* ─── チェック済みアイテム ─── */}
-      {checkedItems.length > 0 && (
-        <div className="space-y-1">
-          {checkedItems.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-lg shadow-sm flex items-stretch overflow-hidden opacity-60"
-              style={{
-                backgroundImage: 'repeating-linear-gradient(-45deg, rgba(156,163,175,0.12) 0px, rgba(156,163,175,0.12) 2px, transparent 2px, transparent 9px)',
-              }}
-            >
-              <div className="w-1 flex-shrink-0" />
-              <div className="flex-1 flex items-center gap-3 px-3 py-2">
-                <button
-                  onClick={() => handleToggle(item)}
-                  className="w-4 h-4 rounded-full border-2 border-primary-500 bg-primary-500 flex items-center justify-center flex-shrink-0"
-                >
-                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                  </svg>
-                </button>
-                <span className="flex-1 text-sm text-gray-400 line-through">{item.name}</span>
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  className="p-1 text-gray-300 hover:text-red-500 transition flex-shrink-0"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
 
       {/* ─── 空状態 ─── */}
       {list.items.length === 0 && (
