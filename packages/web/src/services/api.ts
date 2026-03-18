@@ -38,7 +38,7 @@ export const listsApi = {
 
   getById: (id: string) => fetchApi<List & { items: Item[] }>(`/lists/${id}`),
 
-  create: (data: { name: string; description?: string; groupId?: string }) =>
+  create: (data: { name: string; description?: string; groupId?: string | null }) =>
     fetchApi<List>('/lists', {
       method: 'POST',
       body: JSON.stringify(data),
