@@ -195,23 +195,19 @@ export default function HomePage() {
               </div>
             )}
             {editingId !== list.id && (
-              isComplete ? (
-                <p className="text-xs text-green-600 mt-1 font-medium">✅ 完了</p>
-              ) : (
-                <>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {list.checkedCount} / {list.itemCount} 完了
-                  </p>
-                  {list.itemCount > 0 && (
-                    <div className="mt-1.5 h-1 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary-500 rounded-full transition-all"
-                        style={{ width: `${progress * 100}%` }}
-                      />
-                    </div>
-                  )}
-                </>
-              )
+              <>
+                <p className="text-xs text-gray-400 mt-1">
+                  {list.checkedCount} / {list.itemCount} 完了
+                </p>
+                {list.itemCount > 0 && (
+                  <div className="mt-1.5 h-1 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${isComplete ? 'bg-green-500' : 'bg-primary-500'}`}
+                      style={{ width: `${progress * 100}%` }}
+                    />
+                  </div>
+                )}
+              </>
             )}
           </div>
 

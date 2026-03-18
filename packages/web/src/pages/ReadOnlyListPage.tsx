@@ -107,7 +107,7 @@ export default function ReadOnlyListPage() {
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-6 space-y-4">
         {/* リスト情報 */}
-        <div className="bg-white rounded-xl shadow p-4 space-y-2">
+        <div className="bg-white rounded-lg shadow p-4 space-y-2">
           <div className="flex items-start justify-between gap-2">
             <div>
               <h1 className="text-xl font-bold text-gray-900">{list.name}</h1>
@@ -176,7 +176,7 @@ export default function ReadOnlyListPage() {
                 <div className="w-1 flex-shrink-0 bg-transparent" />
                 <div className="flex items-center gap-3 px-3 py-2 flex-1 min-w-0"
                   style={{ background: 'repeating-linear-gradient(135deg, transparent, transparent 4px, rgba(0,0,0,0.03) 4px, rgba(0,0,0,0.03) 8px)' }}>
-                  <div className="w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center flex-shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-primary-400 flex items-center justify-center flex-shrink-0">
                     <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
